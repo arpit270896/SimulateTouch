@@ -1,5 +1,6 @@
 package in.co.sdslabs.simulatetouch;
 
+import android.app.Application;
 import android.app.Service;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -31,7 +32,7 @@ public class RecognizationService extends Service implements RecognitionListener
     private static final String KWS_SEARCH = "wakeup";
     private static final String MENU_SEARCH = "menu";
     private static final List<String> WORDS_LIST = Arrays.asList("up", "down", "left", "right");
-    private static final String KEYPHRASE = "hey cortana";
+    private static final String KEYPHRASE = "ok google";
 
 
     private SpeechRecognizer recognizer;
@@ -45,15 +46,18 @@ public class RecognizationService extends Service implements RecognitionListener
             @Override
             protected Exception doInBackground(Void... params) {
                 try {
-                    Assets assets = new Assets(PocketSphinx.this);
+                    Assets assets = new Assets(RecognizationService.this);
                     File assetDir = assets.syncAssets();
                     setupRecognizer(assetDir);
-
                 }
+                catch(IOException e) {
+                    return e;
+                }
+                return null;
             }
 
             @Override
-            protected Exception OnPostExecute(Exception exception) {
+            protected void onPostExecute(Exception exception) {
                 if(exception!=null) {
                     Log.d("In service: ", "Failed to initiate Recognizer");
                 }
@@ -62,7 +66,7 @@ public class RecognizationService extends Service implements RecognitionListener
                     recognizer.startListening(KWS_SEARCH);
                 }
             }
-        }
+        }.execute();
 
 
     }
@@ -76,8 +80,6 @@ public class RecognizationService extends Service implements RecognitionListener
     private void setupRecognizer(File assetsDir) throws IOException {
         // The recognizer can be configured to perform multiple searches
         // of different kind and switch between them
-
-        Log.d("In service: ", "Setting up recognizer");
 
         recognizer = defaultSetup()
                 .setAcousticModel(new File(assetsDir, "en-us-ptm"))
@@ -120,7 +122,6 @@ public class RecognizationService extends Service implements RecognitionListener
 
     @Override
     public void onPartialResult(Hypothesis hypothesis) {
-        Log.d("In service: ", "on partial result");
 
         if(hypothesis == null) {
             return;
@@ -155,7 +156,6 @@ public class RecognizationService extends Service implements RecognitionListener
 
     @Override
     public void onResult(Hypothesis hypothesis) {
-        Log.d("In service: ", "on result");
 
         if(hypothesis != null) {
             String text = hypothesis.getHypstr();
