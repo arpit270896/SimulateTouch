@@ -9,9 +9,11 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
+import java.security.PrivateKey;
 import java.util.Arrays;
 import java.util.List;
 
@@ -34,13 +36,22 @@ public class RecognizationService extends Service implements RecognitionListener
     private static final List<String> WORDS_LIST = Arrays.asList("up", "down", "left", "right");
     private static final String KEYPHRASE = "ok google";
 
-
     private SpeechRecognizer recognizer;
+    private Process process;
+    private DataOutputStream os;
+    private String cmd;
 
     @Override
     public void onCreate() {
-
         Log.d("In service: ", "service started");
+
+        try {
+            process = Runtime.getRuntime().exec("su");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        os = new DataOutputStream(process.getOutputStream());
 
         new AsyncTask<Void, Void, Exception>() {
             @Override
@@ -134,13 +145,37 @@ public class RecognizationService extends Service implements RecognitionListener
             Log.d("In service: ",text);
 //            Magic happens here!
             switch (text) {
-                case "left":
-                    break;
                 case "right":
+                    cmd = "/system/bin/input swipe 50 400 850 400\n";
+                    try {
+                        os.writeBytes(cmd);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                case "left":
+                    cmd = "/system/bin/input swipe 430 300 -370 300\n";
+                    try {
+                        os.writeBytes(cmd);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     break;
                 case "up":
+                    cmd = "/system/bin/input swipe 300 650 300 -400\n";
+                    try {
+                        os.writeBytes(cmd);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     break;
                 case "down":
+                    cmd = "/system/bin/input swipe 200 100 200 1150\n";
+                    try {
+                        os.writeBytes(cmd);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     break;
                 default:
                     Log.d("In service: ", "This can't happen!!!!!");
@@ -156,6 +191,11 @@ public class RecognizationService extends Service implements RecognitionListener
             recognizer.startListening(MENU_SEARCH);
         }
 
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.d("In session: ", "service destroyed");
     }
 
     @Override
