@@ -146,6 +146,10 @@ public class RecognizationService extends Service implements RecognitionListener
                     Log.d("In service: ", "This can't happen!!!!!");
                     break;
             }
+
+            recognizer.stop();
+            recognizer.startListening(MENU_SEARCH);
+
         }
         else if(text.equals(KEYPHRASE)){
             recognizer.stop();
