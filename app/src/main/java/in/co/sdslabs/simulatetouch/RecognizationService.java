@@ -42,7 +42,7 @@ public class RecognizationService extends Service implements RecognitionListener
     /* Named searches allow to quickly reconfigure the decoder */
     private static final String KWS_SEARCH = "wakeup";
     private static final String MENU_SEARCH = "menu";
-    private static final List<String> WORDS_LIST = Arrays.asList("up", "down", "left", "right");
+    private static final List<String> WORDS_LIST = Arrays.asList("up", "down", "left", "right", "stop");
     private static final String KEYPHRASE = "ok google";
 
 
@@ -237,6 +237,10 @@ public class RecognizationService extends Service implements RecognitionListener
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
+                    break;
+                case "stop":
+                    recognizer.stop();
+                    recognizer.startListening(KWS_SEARCH);
                     break;
                 default:
                     Log.d("In service: ", "This can't happen!!!!!");
