@@ -1,6 +1,9 @@
 package in.co.sdslabs.simulatetouch;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -24,10 +27,20 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Log.d("On click", "clicked");
                 startService(new Intent(MainActivity.this, RecognizationService.class));
+
             }
         });
 
+        registerReceiver(abcd, new IntentFilter("android.intent.action.MAIN"));
+
     }
+
+    private final BroadcastReceiver abcd = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            finish();
+        }
+    };
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -49,5 +62,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(abcd);
     }
 }

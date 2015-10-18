@@ -4,10 +4,12 @@ import android.app.Application;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -17,6 +19,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -45,72 +48,22 @@ public class RecognizationService extends Service implements RecognitionListener
     private static final List<String> WORDS_LIST = Arrays.asList("up", "down", "left", "right", "stop");
     private static final String KEYPHRASE = "ok google";
 
-
     private SpeechRecognizer recognizer;
     private Process process;
     private DataOutputStream os;
     private String cmd;
-    private WindowManager windowManager;
-    private ImageView floatingHead;
-    private WindowManager.LayoutParams layoutParams;
-    private Display display;
-    private Point screenSize = new Point(0,0);
+    private Toast toast;
 
     @Override
     public void onCreate() {
         Log.d("In service: ", "service started");
 
 
-        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-        display = windowManager.getDefaultDisplay();
-        display.getSize(screenSize);
-
-        floatingHead = new ImageView(this);
-        floatingHead.setBackgroundResource(R.mipmap.floating_head);
-
-        layoutParams = new WindowManager.LayoutParams(
-                (int)Math.sqrt(screenSize.x*screenSize.y/100*Math.PI), (int)Math.sqrt(screenSize.x*screenSize.y/100*Math.PI),
-                WindowManager.LayoutParams.TYPE_PHONE, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.TRANSLUCENT);
-
-        layoutParams.gravity = Gravity.TOP | Gravity.START;
-        layoutParams.x = 0;
-        layoutParams.y = 100;
-
         try {
             process = Runtime.getRuntime().exec("su");
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        floatingHead.setOnTouchListener(new View.OnTouchListener() {
-            private int initialX;
-            private int initialY;
-            private float initialTouchX;
-            private float initialTouchY;
-
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        initialX = layoutParams.x;
-                        initialY = layoutParams.y;
-                        initialTouchX = event.getRawX();
-                        initialTouchY = event.getRawY();
-                        return true;
-                    case MotionEvent.ACTION_UP:
-                        return true;
-                    case MotionEvent.ACTION_MOVE:
-                        layoutParams.x = initialX
-                                + (int) (event.getRawX() - initialTouchX);
-                        layoutParams.y = initialY
-                                + (int) (event.getRawY() - initialTouchY);
-                        windowManager.updateViewLayout(floatingHead, layoutParams);
-                        return true;
-                }
-                return false;
-            }
-        });
 
         os = new DataOutputStream(process.getOutputStream());
 
@@ -134,12 +87,13 @@ public class RecognizationService extends Service implements RecognitionListener
                     Log.d("In service: ", "Failed to initiate Recognizer");
                 }
                 else {
+                    sendBroadcast(new Intent("android.intent.action.MAIN"));
                     recognizer.stop();
                     recognizer.startListening(KWS_SEARCH);
-                    windowManager.addView(floatingHead, layoutParams);
                 }
             }
         }.execute();
+
 
     }
 
@@ -203,8 +157,10 @@ public class RecognizationService extends Service implements RecognitionListener
         Log.d("In service: ", "Partial result got: " + text);
 
         if(WORDS_LIST.contains(text)){
-            Log.d("In service: ",text);
+            Log.d("In service: ", text);
 //            Magic happens here!
+            toast = Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG);
+            toast.show();
             switch (text) {
                 case "right":
                     cmd = "/system/bin/input swipe 50 400 850 400\n";
@@ -252,15 +208,35 @@ public class RecognizationService extends Service implements RecognitionListener
 
         }
         else if(text.equals(KEYPHRASE)){
+            toast = Toast.makeText(getApplicationContext(), "Listening...", Toast.LENGTH_LONG);
+            toast.show();
             recognizer.stop();
             recognizer.startListening(MENU_SEARCH);
         }
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                toast.cancel();
+            }
+        }, 500);
 
     }
 
     @Override
     public void onDestroy() {
+
+        toast = Toast.makeText(getApplicationContext(), "Closing service...", Toast.LENGTH_LONG);
+        toast.show();
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                toast.cancel();
+            }
+        }, 500);
         Log.d("In session: ", "service destroyed");
+        super.onDestroy();
     }
 
     @Override
