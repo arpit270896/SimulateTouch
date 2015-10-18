@@ -84,31 +84,32 @@ public class RecognizationService extends Service implements RecognitionListener
         }
 
         floatingHead.setOnTouchListener(new View.OnTouchListener() {
-            private int initialX;
-            private int initialY;
-            private float initialTouchX;
-            private float initialTouchY;
-
+//            private int initialX;
+//            private int initialY;
+//            private float initialTouchX;
+//            private float initialTouchY;
+//
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        initialX = layoutParams.x;
-                        initialY = layoutParams.y;
-                        initialTouchX = event.getRawX();
-                        initialTouchY = event.getRawY();
-                        return true;
-                    case MotionEvent.ACTION_UP:
-                        return true;
-                    case MotionEvent.ACTION_MOVE:
-                        layoutParams.x = initialX
-                                + (int) (event.getRawX() - initialTouchX);
-                        layoutParams.y = initialY
-                                + (int) (event.getRawY() - initialTouchY);
-                        windowManager.updateViewLayout(floatingHead, layoutParams);
-                        return true;
-                }
-                return false;
+                stopSelf();
+//                switch (event.getAction()) {
+//                    case MotionEvent.ACTION_DOWN:
+//                        initialX = layoutParams.x;
+//                        initialY = layoutParams.y;
+//                        initialTouchX = event.getRawX();
+//                        initialTouchY = event.getRawY();
+//                        return true;
+//                    case MotionEvent.ACTION_UP:
+//                        return true;
+//                    case MotionEvent.ACTION_MOVE:
+//                        layoutParams.x = initialX
+//                                + (int) (event.getRawX() - initialTouchX);
+//                        layoutParams.y = initialY
+//                                + (int) (event.getRawY() - initialTouchY);
+//                        windowManager.updateViewLayout(floatingHead, layoutParams);
+//                        return true;
+//                }
+                return true;
             }
         });
 
